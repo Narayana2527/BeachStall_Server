@@ -18,7 +18,9 @@ connectDB();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: "https://beach-stall-client.vercel.app/", // React frontend URL
+  origin: process.env.NODE_ENV === 'production' 
+    ? "https://beach-stall-client.vercel.app/" 
+    : "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -34,7 +36,14 @@ app.use("/api", bookingRoutes);
 app.get('/', (req, res) => {
     res.status(200).json({ message: "API is working fine!" });
 });
-app.listen(PORT,()=>{
-    console.log(`Server is running on ${PORT}`)
-})
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server is running on ${PORT}`);
+    });
+}
+
+// REQUIRED for Vercel deployment
+module.exports = app;
 
