@@ -34,7 +34,12 @@ app.use("/api", bookingRoutes);
 app.get('/', (req, res) => {
     res.status(200).json({ message: "API is working fine!" });
 });
-app.listen(PORT,()=>{
-    console.log(`Server is running on ${PORT}`)
-})
+
+if (process.env.NODE_ENV) {
+  // We are on Vercel, export the app
+  module.exports = app;
+} else {
+  // We are local, run the server
+  app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+}
 
