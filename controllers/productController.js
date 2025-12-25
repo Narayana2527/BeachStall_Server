@@ -1,4 +1,12 @@
 const Product = require("../model/productModel");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
 
 module.exports = {
   // Get all products
@@ -28,40 +36,36 @@ module.exports = {
   // Create a product (Admin logic)
   createProduct: async (req, res) => {
     try {
-      // 1. Destructure text data from req.body
-      const { name, description, price, category, countInStock, isFeatured } = req.body;
-
-      // 2. Check if a file was uploaded by multer
-      if (!req.file) {
-        return res.status(400).json({ success: false, message: "Please upload an image" });
-      }
-
-      // 3. Create a new product instance
-      // Note: we take the path from req.file provided by multer
-      const product = new Product({
-        name,
-        description,
-        price,
-        category,
-        image: req.file.path, // Stores the relative path to the image
-        countInStock,
-        isFeatured
+    // 1. Upload the image buffer to Cloudinary
+    const streamUpload = (req) => {
+      return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream((error, result) => {
+          if (result) resolve(result);
+          else reject(error);
+        });
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
       });
+    };
 
-      // 4. Save to MongoDB
-      const savedProduct = await product.save();
+    const result = await streamUpload(req);
 
-      res.status(201).json({
-        success: true,
-        message: "Product created successfully",
-        data: savedProduct
-      });
-      
-    } catch (error) {
-      res.status(400).json({ 
-        success: false, 
-        message: error.message 
-      });
-    }
+    // 2. Create the product using your existing Model
+    const newProduct = new Product({
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      category: req.body.category,
+      countInStock: req.body.countInStock,
+      isFeatured: req.body.isFeatured,
+      image: result.secure_url 
+    });
+
+    // 3. Save to MongoDB Atlas
+    const savedProduct = await newProduct.save();
+    
+    res.status(201).json(savedProduct);
+  } catch (error) {
+    res.status(500).json({ message: "Upload failed", error: error.message });
+  }
   }
 }
