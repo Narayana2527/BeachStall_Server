@@ -2,12 +2,13 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
+  name: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
-  category: { type: String, required: true }, // e.g., 'Main Course', 'Drinks'
-  image: { type: String, required: true },    // URL or file path
-  countInStock: { type: Number, required: true, default: 0 },
+  category: { type: String, required: true },
+  image: { type: String, required: true },
+  imagePublicId: { type: String, required: true }, 
+  countInStock: { type: Number, default: 0 },
   isFeatured: { type: Boolean, default: false }
 }, { timestamps: true });
 
