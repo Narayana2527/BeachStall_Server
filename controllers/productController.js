@@ -86,11 +86,18 @@ module.exports = {
       product.image = result.secure_url;
       product.imagePublicId = result.public_id;
     }
-
+    product.name = req.body.name || product.name;
+    product.description = req.body.description || product.description;
+    // product.price = req.body.price || product.price;
+    product.category = req.body.category || product.category;
+    // product.countInStock = req.body.countInStock || product.countInStock;
+    // product.isFeatured = req.body.isFeatured || product.isFeatured;
+    product.image = imageUrl;
     // 🔁 Update fields safely
-    if (req.body.name) product.name = req.body.name;
-    if (req.body.description) product.description = req.body.description;
-    if (req.body.category) product.category = req.body.category;
+    // if (req.body.name) product.name = req.body.name;
+    // if (req.body.description) product.description = req.body.description;
+    // if (req.body.category) product.category = req.body.category;
+
 
     if (req.body.price !== undefined) {
       product.price = Number(req.body.price);
