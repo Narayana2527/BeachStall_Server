@@ -11,48 +11,56 @@ const generateToken = (id) => {
 
 module.exports = {
   userRegister: async (req, res) => {
-  try {
-    const { name, email, password, confirmPassword, terms, role } = req.body;
+    try {
+      const { name, email, password, confirmPassword, terms, adminSecret } = req.body;
 
-    if (!name || !email || !password || !confirmPassword) {
-      return res.status(400).json({ message: "All fields are required" });
+      if (!name || !email || !password || !confirmPassword) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+
+      if (!terms) {
+        return res.status(400).json({ message: "You must agree to terms" });
+      }
+
+      const userExists = await User.findOne({ email });
+      if (userExists) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+     
+
+    let role = "user";
+    // Using .trim() on both sides to remove hidden spaces/newlines
+    if (adminSecret && adminSecret.trim() === process.env.ADMIN_SIGNUP_SECRET?.trim()) {
+      role = "admin";
     }
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
+      const user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        terms
+      });
+
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user._id),
+      });
+
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-
-    if (!terms) {
-      return res.status(400).json({ message: "You must agree to terms" });
-    }
-
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "user",
-      terms
-    });
-
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user.id),
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-}
-,
+  },
 
   userLogin: async (req, res) => {
     try {
@@ -61,16 +69,17 @@ module.exports = {
 
       if (user && (await bcrypt.compare(password, user.password))) {
         res.status(200).json({
-          _id: user.id,
+          _id: user._id,
           name: user.name,
           email: user.email,
-          token: generateToken(user.id),
+          role: user.role, 
+          token: generateToken(user._id),
         });
       } else {
         res.status(401).json({ message: "Invalid email or password" });
       }
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+      res.status(500).json({ message: "Server error", error: error.message });
     }
   },
 

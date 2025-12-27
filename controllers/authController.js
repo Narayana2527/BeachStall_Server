@@ -10,8 +10,7 @@ const getMe = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role, // e.g., 'admin' or 'customer'
-        // profilePic: user.profilePic
+        role: user.role,
       });
     } else {
       res.status(404).json({ message: 'User not found' });

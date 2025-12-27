@@ -6,6 +6,6 @@ router.post('/register',userRegister);
 router.post('/login',userLogin);
 router.get('/profile/:id',getUserProfile)
 router.get('/profile',getProfile)
-
+// router.get('/all-orders', protect, admin, getAllOrders);
 
 module.exports = router;
